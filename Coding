@@ -1,0 +1,404 @@
+#include<pic.h>
+__CONFIG(0X3f72);
+  
+static bit rs@((unsigned )&PORTD*8+1);
+static bit rw@((unsigned )&PORTD*8+2);
+static bit en@((unsigned )&PORTD*8+3);
+
+static bit SW1@((unsigned )&PORTB*8+0);
+static bit SW2@((unsigned )&PORTB*8+1);
+static bit SW3@((unsigned )&PORTB*8+6);
+
+#define MOTOR1F RC0
+#define MOTOR1R RC1
+
+#define MOTOR2F RC2
+#define MOTOR2R RC3
+
+static bit ultrasonic1@((unsigned )&PORTB*8+2);
+static bit trig@((unsigned )&PORTB*8+3);
+
+static bit irsensor1@((unsigned )&PORTB*8+4);
+static bit irsensor2@((unsigned )&PORTB*8+5);
+
+static bit BUZZER@((unsigned )&PORTC*8+4);
+
+static bit RS1@((unsigned )&PORTA*8+1);
+static bit LS1@((unsigned )&PORTA*8+2);
+
+unsigned char s1;
+unsigned char VAL41,VAL1,ser=0x37,st=0x01,data_cap=0x00,VAL33=0,val11=0,VAL71=0; 
+unsigned int adc_value,val1,val2=0,val3=0,val5=0,b,c,e;
+unsigned char st_1=0x01,data_cap_1=0x00;
+unsigned int aa=0,c,d,M2,e1;
+unsigned char i,j,f,g,h,z;
+unsigned char T=0,valaa=0,valbb=0,valcc=0,valdd=0,VAL10=0;
+
+
+
+unsigned char VAL1=1,VAL3,VAL4,VAL5,VAL6;
+unsigned int VAL7=0;
+
+unsigned int VAL2=0; 
+
+unsigned char da[8];
+
+void delay(unsigned int y)//delay prg
+{
+while(y--);
+}
+
+
+//**************************
+//  LCD
+//**************************
+void lcd_command(unsigned char com)
+{
+unsigned char temp;
+PORTD=com&0xf0;
+rs=0;
+rw=0;
+en=1;
+delay(10);
+en=0;
+temp=com<<4;
+PORTD=temp&0xf0;
+rs=0;
+rw=0;
+en=1;
+delay(10);
+en=0;
+}
+//**************************
+
+void lcd_init()
+{
+lcd_command(0x02);
+lcd_command(0x2c);
+lcd_command(0x06);
+lcd_command(0x0c);
+lcd_command(0x01);
+lcd_command(0x80);
+}
+//**************************
+void lcd_data(unsigned char data)
+{
+unsigned char val1;
+PORTD=data&0xf0;
+en=1;
+rs=1;
+rw=0;
+delay(10);
+en=0;
+val1=data<<4;
+PORTD=val1&0xf0;
+en=1;
+rs=1;
+rw=0;
+delay(10);
+en=0;
+}
+//**************************
+void lcd_display(const unsigned char*word,unsigned int n)
+{
+unsigned char l;
+for(l=0;l<n;l++)
+{
+lcd_data(word[l]);
+}
+}
+//**************************
+void adcconvert5()
+{
+
+b=aa%10;
+c=aa/10;
+
+e1=c%10;
+f=c/10;
+g=f%10;
+h=f/10;
+
+lcd_command(0x01);
+
+delay(1000);
+lcd_command(0xc0);
+delay(100);
+
+lcd_display("WEIGHT=",7);
+lcd_data(g+0x30);
+delay(100);
+
+lcd_data(e1+0x30);
+delay(100);
+
+
+lcd_data(b+0x30);
+delay(100);  
+}
+
+void adcconvert3()
+{
+b=M2%10;
+c=M2/10;
+
+e=c%10;
+f=c/10;
+g=f%10;
+h=f/10;
+
+
+lcd_data(g+0x30);
+delay(100);
+
+lcd_data(e+0x30);
+delay(100);
+
+
+lcd_data(b+0x30);
+delay(100);  
+}
+//********************
+void adc_convert()
+{
+CHS0=0;
+CHS1=0;
+CHS2=0;
+ADON=1;
+delay(200);
+ADCON0=ADCON0|0X04;
+delay(200);
+adc_value=ADRESH;
+adc_value=adc_value<<8;
+adc_value=(adc_value+ADRESL)/0x02;
+aa=adc_value;
+VAL2=adc_value;
+delay(100);
+adcconvert5();
+}
+//********************
+//  main
+//********************
+void main()
+{
+ADCON1=0X8E;
+ADCON0=0x00;
+
+TRISA=0XFF;
+TRISB=0XF7;
+TRISC=0x80;
+TRISD=0x00;
+TRISE=0x03;
+
+PORTC=0x80;
+PORTD=0x00;
+PORTE=0x03;
+PORTB=0x1F;
+delay(10000);
+
+BUZZER=1;
+lcd_init();
+delay(100);
+lcd_command(0x80);
+delay(100);
+lcd_display("WELCOME TO",10);
+delay(1000);
+lcd_command(0xc0);
+delay(100);
+lcd_display("AIRPORT",8);
+delay(1000);
+delay(50000);delay(50000);delay(50000);
+delay(50000);delay(50000);delay(50000);
+ VAL5=0; VAL6=0;
+
+while(1)
+{
+if(SW2==1)
+   {
+ while(SW2==1);
+ VAL6=1;
+ lcd_command(0x80);
+ delay(100);
+lcd_command(0x01);
+ delay(100);
+ lcd_display("HUMAN FOLLOWING ",15);
+
+lcd_command(0xC0);
+ delay(100);
+ lcd_display(" MODE ON",8);
+ delay(50000);delay(50000);delay(50000);
+}
+if(SW3==1)
+   {
+ while(SW3==1);
+ lcd_command(0x80);
+ delay(100);
+lcd_command(0x01);
+ delay(100);
+ lcd_display("LINE FOLLOWING ",15);
+
+ lcd_command(0xC0);
+ delay(100);
+ lcd_display("MODE ON ",8);
+ VAL71=1;VAL6=0;
+BUZZER=0; delay(50000);delay(50000);delay(50000);
+ delay(50000);delay(50000);BUZZER=1; VAL5=0;
+}
+//********************
+adc_convert();
+delay(10000);
+
+//********************
+if(SW1==1)
+   {
+ while(SW1==1);
+ VAL5=1;
+
+ VAL7=VAL2-7;//VAL8=VAL2+5;
+ delay(10000);
+ lcd_command(0x80);
+ delay(100);
+ lcd_display(" LUGGAGE SET   ",15);
+ delay(50000);delay(50000);delay(50000);
+}
+
+
+//********************
+
+if(VAL5==1)
+{
+if(VAL2<VAL7)
+{
+BUZZER=0;
+
+ lcd_command(0x80);
+ delay(100);
+lcd_display("LUGGAGE LOW",11);
+delay(50000);delay(50000);delay(50000);delay(50000);
+delay(50000);delay(50000);delay(50000);BUZZER=1;
+}
+
+}
+//********************
+//******* ************
+//sensor
+//********************
+if(VAL6==1)
+{
+   trig=0;
+	for(e=0;e<30;e++);  
+	trig=1;
+	for(e=0;e<30;e++);
+	trig=0;
+    while(ultrasonic1==0);
+	if(ultrasonic1==1)
+	{
+	while(ultrasonic1==1)
+	 	{
+	 	d++;
+		if(d>1000)
+			break;
+		}		 
+
+	
+		  d=d*2;
+
+	lcd_command(0x8A);	
+	lcd_data((d%10000)/1000+0x30);
+	lcd_data((d%1000)/100+0x30);
+	lcd_data((d%100)/10+0x30);
+    lcd_data((d%10)+0x30);
+    lcd_data('m');
+    lcd_data('m');
+
+
+}
+	
+
+
+
+       if((d<100)&&(d>30))
+       {
+ MOTOR1F=1;
+ MOTOR2F=1;
+ MOTOR1R=0;
+ MOTOR2R=0;
+
+        }
+
+
+else
+{
+ MOTOR1F=0;
+ MOTOR2F=0;
+ MOTOR1R=0;
+ MOTOR2R=0;
+}
+
+
+
+    d=0;
+
+
+//************************
+//************************
+if(irsensor1==0)
+{
+while(irsensor1==0)
+{
+ MOTOR1F=1;
+ MOTOR2F=0;
+ MOTOR1R=0;
+ MOTOR2R=1;
+}
+ MOTOR1F=0;
+ MOTOR2F=0;
+ MOTOR1R=0;
+ MOTOR2R=0;
+}
+
+//************************
+if(irsensor2==0)
+{
+
+while(irsensor2==0)
+{
+ MOTOR1F=0;
+ MOTOR2F=1;
+ MOTOR1R=1;
+ MOTOR2R=0;
+}
+ MOTOR1F=0;
+ MOTOR2F=0;
+ MOTOR1R=0;
+ MOTOR2R=0;
+}
+}
+
+if(VAL71==1)
+{
+if((RS1==1)&&(LS1==1))
+ {
+ MOTOR1F=1;MOTOR2F=1;MOTOR1R=0;MOTOR2R=0;
+ }
+
+if((RS1==0)&&(LS1==1))
+ {
+ MOTOR1F=0;MOTOR2R=0;MOTOR2F=1;MOTOR1R=0;
+ }
+
+if((RS1==1)&&(LS1==0))
+ {
+ MOTOR1F=1;MOTOR2R=0;MOTOR2F=0;MOTOR1R=0;
+ }
+if((RS1==0)&&(LS1==0))
+ {
+ MOTOR1F=0;MOTOR2R=0;MOTOR2F=0;MOTOR1R=0;
+ }
+}
+
+
+
+
+}
+}
